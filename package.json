@@ -1,0 +1,16 @@
+{
+  "name": "ant-colony",
+  "version": "1.0.0",
+  "description": "蚁群认知重塑系统 - 基于硅基流动API的多Agent AI流水线",
+  "type": "module",
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "dev": "wrangler pages dev",
+    "deploy": "wrangler pages deploy"
+  },
+  "devDependencies": {
+    "wrangler": "^4.0.0"
+  }
+}

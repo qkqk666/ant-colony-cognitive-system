@@ -1,0 +1,22 @@
+name = "ant-colony"
+compatibility_date = "2026-05-16"
+compatibility_flags = ["nodejs_compat"]
+
+[build]
+command = ""
+upload = { format = "service-worker" }
+
+[site]
+bucket = "./"
+entry-point = "."
+
+[[runs]]
+command = ["node", "-v"]
+
+[vars]
+SILICONFLOW_API_KEY = "your_api_key_here"
+
+[build.upload]
+format = "service-worker"
+dir = "."
+include = ["*.html", "*.js", "*.css", "functions/**"]

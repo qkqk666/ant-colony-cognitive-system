@@ -1,0 +1,899 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>蚁群 · 认知重塑系统</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', system-ui, sans-serif;
+        }
+
+        :root {
+            --bg-dark: #0a0d14;
+            --bg-card: #141824;
+            --primary-gold: #d4a853;
+            --primary-gold-light: #e6c27c;
+            --text-primary: #f0f2f5;
+            --text-secondary: #a0a6b8;
+            --border: #2a2f3d;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --error: #ef4444;
+            --running: #3b82f6;
+        }
+
+        body {
+            background: var(--bg-dark);
+            color: var(--text-primary);
+            min-height: 100vh;
+            padding: 20px;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: 1fr 350px;
+            gap: 24px;
+        }
+
+        header {
+            grid-column: 1 / -1;
+            margin-bottom: 24px;
+            padding-bottom: 16px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        h1 {
+            font-size: 2.2rem;
+            background: linear-gradient(135deg, var(--primary-gold), #ffd700);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            margin-bottom: 8px;
+        }
+
+        .subtitle {
+            color: var(--text-secondary);
+            font-size: 1rem;
+        }
+
+        /* 左侧主操作区 */
+        .main-panel {
+            background: var(--bg-card);
+            border-radius: 16px;
+            padding: 28px;
+            border: 1px solid var(--border);
+        }
+
+        .section-title {
+            font-size: 1.3rem;
+            margin-bottom: 20px;
+            color: var(--primary-gold-light);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .section-title i {
+            font-size: 1.1rem;
+        }
+
+        /* 六维评分输入 */
+        .dimensions-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 20px;
+            margin-bottom: 32px;
+        }
+
+        .dimension-card {
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 12px;
+            padding: 18px;
+            border: 1px solid var(--border);
+            transition: border-color 0.2s;
+        }
+
+        .dimension-card:hover {
+            border-color: var(--primary-gold);
+        }
+
+        .dimension-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+
+        .dimension-name {
+            font-weight: 600;
+            font-size: 1.05rem;
+        }
+
+        .dimension-score {
+            font-weight: 700;
+            font-size: 1.3rem;
+            color: var(--primary-gold);
+        }
+
+        .slider-container {
+            margin-top: 10px;
+        }
+
+        input[type="range"] {
+            width: 100%;
+            height: 8px;
+            -webkit-appearance: none;
+            background: linear-gradient(to right, var(--error), var(--warning), var(--success));
+            border-radius: 4px;
+            outline: none;
+        }
+
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 20px;
+            height: 20px;
+            background: var(--primary-gold);
+            border-radius: 50%;
+            cursor: pointer;
+            border: 2px solid var(--bg-dark);
+        }
+
+        .slider-labels {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 6px;
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+        }
+
+        /* 文本输入区 */
+        .text-inputs {
+            display: grid;
+            gap: 20px;
+            margin-bottom: 32px;
+        }
+
+        .input-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        label {
+            font-weight: 600;
+            color: var(--text-secondary);
+        }
+
+        textarea, input[type="text"] {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 12px;
+            color: var(--text-primary);
+            font-size: 0.95rem;
+            resize: vertical;
+            min-height: 80px;
+        }
+
+        textarea:focus, input[type="text"]:focus {
+            outline: none;
+            border-color: var(--primary-gold);
+        }
+
+        /* 生成按钮 */
+        .btn-generate {
+            background: linear-gradient(135deg, var(--primary-gold), #c1953a);
+            color: #000;
+            border: none;
+            border-radius: 10px;
+            padding: 16px 32px;
+            font-size: 1.1rem;
+            font-weight: 700;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            width: 100%;
+            transition: transform 0.2s, opacity 0.2s;
+        }
+
+        .btn-generate:hover {
+            opacity: 0.9;
+            transform: translateY(-2px);
+        }
+
+        .btn-generate:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        /* 右侧进度面板 */
+        .side-panel {
+            background: var(--bg-card);
+            border-radius: 16px;
+            padding: 24px;
+            border: 1px solid var(--border);
+            height: fit-content;
+            position: sticky;
+            top: 20px;
+        }
+
+        .progress-title {
+            font-size: 1.2rem;
+            margin-bottom: 20px;
+            color: var(--primary-gold-light);
+        }
+
+        .node-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .node-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 16px;
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 10px;
+            border: 1px solid var(--border);
+            transition: all 0.2s;
+        }
+
+        .node-item.running {
+            border-color: var(--running);
+            background: rgba(59, 130, 246, 0.1);
+        }
+
+        .node-item.completed {
+            border-color: var(--success);
+            background: rgba(16, 185, 129, 0.1);
+        }
+
+        .node-item.warning {
+            border-color: var(--warning);
+            background: rgba(245, 158, 11, 0.1);
+        }
+
+        .node-item.failed {
+            border-color: var(--error);
+            background: rgba(239, 68, 68, 0.1);
+        }
+
+        .node-icon {
+            width: 24px;
+            height: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1rem;
+            border-radius: 50%;
+            background: var(--bg-dark);
+        }
+
+        .node-content {
+            flex: 1;
+        }
+
+        .node-name {
+            font-weight: 600;
+            font-size: 0.95rem;
+        }
+
+        .node-detail {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            margin-top: 2px;
+        }
+
+        /* 方案展示区 */
+        .plan-panel {
+            grid-column: 1 / -1;
+            background: var(--bg-card);
+            border-radius: 16px;
+            padding: 28px;
+            border: 1px solid var(--border);
+            margin-top: 24px;
+            display: none;
+        }
+
+        .plan-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .plan-actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        .btn-icon {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            color: var(--text-secondary);
+            transition: all 0.2s;
+        }
+
+        .btn-icon:hover {
+            color: var(--primary-gold);
+            border-color: var(--primary-gold);
+        }
+
+        .plan-content {
+            background: rgba(255, 255, 255, 0.02);
+            border-radius: 12px;
+            padding: 24px;
+            border: 1px solid var(--border);
+            white-space: pre-wrap;
+            font-size: 0.95rem;
+            line-height: 1.7;
+            max-height: 500px;
+            overflow-y: auto;
+        }
+
+        /* 状态颜色 */
+        .status-running { color: var(--running); }
+        .status-completed { color: var(--success); }
+        .status-warning { color: var(--warning); }
+        .status-failed { color: var(--error); }
+        .status-pending { color: var(--text-secondary); }
+
+        /* 响应式 */
+        @media (max-width: 900px) {
+            .container {
+                grid-template-columns: 1fr;
+            }
+
+            .dimensions-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .side-panel {
+                position: static;
+                margin-top: 24px;
+            }
+
+            /* 修正9：移动端进度面板样式补全 */
+            .node-item {
+                font-size: 12px;
+                gap: 6px;
+                padding: 6px 8px;
+            }
+            .node-item .node-icon {
+                font-size: 14px;
+                width: 16px;
+                height: 16px;
+            }
+            .node-item .node-detail {
+                font-size: 10px;
+            }
+            .btn-generate {
+                padding: 12px;
+                font-size: 14px;
+            }
+        }
+
+        @media (max-width: 600px) {
+            body {
+                padding: 12px;
+            }
+
+            .main-panel, .side-panel, .plan-panel {
+                padding: 18px;
+            }
+
+            h1 {
+                font-size: 1.8rem;
+            }
+        }
+
+        /* 动画 */
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.6; }
+            100% { opacity: 1; }
+        }
+
+        .pulse {
+            animation: pulse 1.5s infinite;
+        }
+
+        /* 滚动条美化 */
+        .plan-content::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .plan-content::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 4px;
+        }
+
+        .plan-content::-webkit-scrollbar-thumb {
+            background: var(--primary-gold);
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1><i class="fas fa-ants"></i> 蚁群 · 认知重塑系统</h1>
+            <p class="subtitle">通过多Agent AI流水线，将六维思维评分转化为个性化培训方案</p>
+        </header>
+
+        <main class="main-panel">
+            <div class="section-title"><i class="fas fa-sliders-h"></i> 六维思维评分</div>
+            <div class="dimensions-grid">
+                <!-- 六个维度卡片 -->
+                <div class="dimension-card">
+                    <div class="dimension-header">
+                        <span class="dimension-name">工具本位</span>
+                        <span class="dimension-score" id="score-tool">5</span>
+                    </div>
+                    <div class="slider-container">
+                        <input type="range" min="0" max="10" value="5" class="dimension-slider" data-dim="tool">
+                        <div class="slider-labels">
+                            <span>拒绝使用</span>
+                            <span>善于利用</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="dimension-card">
+                    <div class="dimension-header">
+                        <span class="dimension-name">本质主义</span>
+                        <span class="dimension-score" id="score-essence">5</span>
+                    </div>
+                    <div class="slider-container">
+                        <input type="range" min="0" max="10" value="5" class="dimension-slider" data-dim="essence">
+                        <div class="slider-labels">
+                            <span>表面接受</span>
+                            <span>深度追问</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="dimension-card">
+                    <div class="dimension-header">
+                        <span class="dimension-name">模块化</span>
+                        <span class="dimension-score" id="score-modular">5</span>
+                    </div>
+                    <div class="slider-container">
+                        <input type="range" min="0" max="10" value="5" class="dimension-slider" data-dim="modular">
+                        <div class="slider-labels">
+                            <span>一团乱麻</span>
+                            <span>清晰拆解</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="dimension-card">
+                    <div class="dimension-header">
+                        <span class="dimension-name">结果导向</span>
+                        <span class="dimension-score" id="score-result">5</span>
+                    </div>
+                    <div class="slider-container">
+                        <input type="range" min="0" max="10" value="5" class="dimension-slider" data-dim="result">
+                        <div class="slider-labels">
+                            <span>过程即目的</span>
+                            <span>目标明确</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="dimension-card">
+                    <div class="dimension-header">
+                        <span class="dimension-name">迭代式</span>
+                        <span class="dimension-score" id="score-iterative">5</span>
+                    </div>
+                    <div class="slider-container">
+                        <input type="range" min="0" max="10" value="5" class="dimension-slider" data-dim="iterative">
+                        <div class="slider-labels">
+                            <span>害怕修改</span>
+                            <span>小步快跑</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="dimension-card">
+                    <div class="dimension-header">
+                        <span class="dimension-name">边界思维</span>
+                        <span class="dimension-score" id="score-boundary">5</span>
+                    </div>
+                    <div class="slider-container">
+                        <input type="range" min="0" max="10" value="5" class="dimension-slider" data-dim="boundary">
+                        <div class="slider-labels">
+                            <span>混乱无序</span>
+                            <span>清晰边界</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="section-title"><i class="fas fa-file-alt"></i> 补充信息（可选）</div>
+            <div class="text-inputs">
+                <div class="input-group">
+                    <label for="manualReport"><i class="fas fa-user-edit"></i> 人工深度分析报告</label>
+                    <textarea id="manualReport" placeholder="如有已有的人工分析报告，可粘贴在此（不超过2000字）"></textarea>
+                </div>
+                <div class="input-group">
+                    <label for="targetRole"><i class="fas fa-briefcase"></i> 目标职位</label>
+                    <input type="text" id="targetRole" placeholder="例如：产品经理、软件工程师、数据分析师">
+                </div>
+                <div class="input-group">
+                    <label for="learningStyle"><i class="fas fa-graduation-cap"></i> 学习风格偏好</label>
+                    <input type="text" id="learningStyle" placeholder="例如：视觉型、动手型、理论型">
+                </div>
+                <div class="input-group">
+                    <label for="timeResource"><i class="fas fa-clock"></i> 时间资源限制</label>
+                    <input type="text" id="timeResource" placeholder="例如：每周5小时、30分钟微课、全天集训">
+                </div>
+                <div class="input-group">
+                    <label for="specialNotes"><i class="fas fa-exclamation-triangle"></i> 特殊注意事项</label>
+                    <textarea id="specialNotes" placeholder="例如：学员有注意力缺陷、抗拒测试、对某些话题敏感"></textarea>
+                </div>
+            </div>
+
+            <button class="btn-generate" id="generateBtn">
+                <i class="fas fa-play-circle"></i> 生成认知重塑方案
+                <span id="timer" style="font-size:0.9rem; margin-left: auto;"></span>
+            </button>
+        </main>
+
+        <aside class="side-panel">
+            <div class="progress-title"><i class="fas fa-stream"></i> 生成进度</div>
+            <div class="node-list" id="nodeList">
+                <!-- 节点动态插入 -->
+                <div class="node-item pending">
+                    <div class="node-icon"><i class="fas fa-hourglass-start"></i></div>
+                    <div class="node-content">
+                        <div class="node-name">等待开始</div>
+                        <div class="node-detail">点击上方按钮启动流水线</div>
+                    </div>
+                </div>
+            </div>
+        </aside>
+
+        <section class="plan-panel" id="planPanel">
+            <div class="plan-header">
+                <div class="section-title"><i class="fas fa-file-contract"></i> 生成的方案</div>
+                <div class="plan-actions">
+                    <div class="btn-icon" id="copyBtn" title="复制方案"><i class="fas fa-copy"></i></div>
+                    <div class="btn-icon" id="downloadBtn" title="下载方案"><i class="fas fa-download"></i></div>
+                    <div class="btn-icon" id="closePlanBtn" title="收起方案"><i class="fas fa-times"></i></div>
+                </div>
+            </div>
+            <div class="plan-content" id="planContent"></div>
+        </section>
+    </div>
+
+    <script>
+        // 节点定义（13个节点）
+        const NODES = [
+            { id: 'a1', name: 'A1漏洞诊断', detail: '分析六维评分，识别崩塌维度' },
+            { id: 'a2', name: 'A2深层归因', detail: '从六个层面归因思维漏洞' },
+            { id: 'inc12', name: '增量校验1-2', detail: '检查A1与A2的一致性' },
+            { id: 'b', name: 'B病毒匹配', detail: '匹配最适合的认知病毒变体' },
+            { id: 'c', name: 'C载体设计', detail: '设计伪装课程结构' },
+            { id: 'd', name: 'D验证设计', detail: '设计感染验证方案' },
+            { id: 'inc34', name: '增量校验3-4', detail: '检查B与C的一致性' },
+            { id: 'v', name: 'V监督校验', detail: '全局9项逻辑校验' },
+            { id: 'integration', name: '整合生成', detail: '整合输出最终方案' },
+        ];
+
+        // 状态映射
+        const STATUS = {
+            pending: { class: 'pending', icon: 'fas fa-hourglass-start' },
+            running: { class: 'running', icon: 'fas fa-spinner fa-pulse' },
+            completed: { class: 'completed', icon: 'fas fa-check-circle' },
+            warning: { class: 'warning', icon: 'fas fa-exclamation-triangle' },
+            failed: { class: 'failed', icon: 'fas fa-times-circle' }
+        };
+
+        // 全局变量
+        let startTime = null;
+        let timerInterval = null;
+        let currentNodes = [];
+
+        // 初始化节点列表
+        function initNodes() {
+            const container = document.getElementById('nodeList');
+            container.innerHTML = '';
+            currentNodes = NODES.map(node => ({ ...node, status: 'pending' }));
+            currentNodes.forEach(node => {
+                const el = createNodeElement(node);
+                container.appendChild(el);
+            });
+        }
+
+        // 创建节点元素
+        function createNodeElement(node) {
+            const div = document.createElement('div');
+            div.className = `node-item ${node.status}`;
+            div.id = `node-${node.id}`;
+            div.innerHTML = `
+                <div class="node-icon"><i class="${STATUS[node.status].icon}"></i></div>
+                <div class="node-content">
+                    <div class="node-name">${node.name}</div>
+                    <div class="node-detail">${node.detail}</div>
+                </div>
+            `;
+            return div;
+        }
+
+        // 更新节点状态
+        function updateNode(id, status, detail = null) {
+            const node = currentNodes.find(n => n.id === id);
+            if (!node) return;
+            node.status = status;
+            const el = document.getElementById(`node-${id}`);
+            if (el) {
+                el.className = `node-item ${status}`;
+                const icon = el.querySelector('.node-icon i');
+                icon.className = STATUS[status].icon;
+                if (detail) {
+                    const detailEl = el.querySelector('.node-detail');
+                    detailEl.textContent = detail;
+                }
+            }
+        }
+
+        // 滑块事件
+        document.querySelectorAll('.dimension-slider').forEach(slider => {
+            slider.addEventListener('input', function() {
+                const dim = this.dataset.dim;
+                const score = this.value;
+                document.getElementById(`score-${dim}`).textContent = score;
+            });
+        });
+
+        // 获取输入数据
+        function getInputData() {
+            const scores = {};
+            ['tool', 'essence', 'modular', 'result', 'iterative', 'boundary'].forEach(dim => {
+                scores[dim] = parseInt(document.getElementById(`score-${dim}`).textContent);
+            });
+            return {
+                scores,
+                manualReport: document.getElementById('manualReport').value.trim(),
+                targetRole: document.getElementById('targetRole').value.trim(),
+                learningStyle: document.getElementById('learningStyle').value.trim(),
+                timeResource: document.getElementById('timeResource').value.trim(),
+                specialNotes: document.getElementById('specialNotes').value.trim()
+            };
+        }
+
+        // 开始计时
+        function startTimer() {
+            startTime = Date.now();
+            const timerEl = document.getElementById('timer');
+            timerInterval = setInterval(() => {
+                const elapsed = Date.now() - startTime;
+                const sec = Math.floor(elapsed / 1000);
+                timerEl.textContent = `⏱️ ${sec}s`;
+            }, 1000);
+        }
+
+        // 停止计时
+        function stopTimer() {
+            if (timerInterval) {
+                clearInterval(timerInterval);
+                timerInterval = null;
+            }
+        }
+
+        // 显示方案
+        function showPlan(planData) {
+            const panel = document.getElementById('planPanel');
+            const content = document.getElementById('planContent');
+            content.textContent = planData.plan || '方案生成失败';
+            panel.style.display = 'block';
+            panel.scrollIntoView({ behavior: 'smooth' });
+        }
+
+        // 复制方案
+        document.getElementById('copyBtn').addEventListener('click', () => {
+            const text = document.getElementById('planContent').textContent;
+            navigator.clipboard.writeText(text).then(() => {
+                alert('方案已复制到剪贴板');
+            });
+        });
+
+        // 下载方案
+        document.getElementById('downloadBtn').addEventListener('click', () => {
+            const text = document.getElementById('planContent').textContent;
+            const blob = new Blob([text], { type: 'text/plain' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `蚁群认知重塑方案_${new Date().toISOString().slice(0,10)}.txt`;
+            a.click();
+            URL.revokeObjectURL(url);
+        });
+
+        // 关闭方案面板
+        document.getElementById('closePlanBtn').addEventListener('click', () => {
+            document.getElementById('planPanel').style.display = 'none';
+        });
+
+        // 生成按钮点击
+        document.getElementById('generateBtn').addEventListener('click', async function() {
+            const btn = this;
+            const data = getInputData();
+            
+            // 验证至少一个维度不是5（默认值）
+            const defaultScores = Object.values(data.scores).every(v => v === 5);
+            if (defaultScores && !data.manualReport && !data.targetRole) {
+                alert('请至少调整一个维度评分或填写一些补充信息');
+                return;
+            }
+
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-spinner fa-pulse"></i> 生成中...';
+
+            initNodes();
+            startTimer();
+
+            // 模拟进度更新（实际应替换为真实API调用）
+            const simulateProgress = () => {
+                let i = 0;
+                const steps = [
+                    { id: 'a1', delay: 500, status: 'completed' },
+                    { id: 'a2', delay: 800, status: 'completed' },
+                    { id: 'inc12', delay: 300, status: 'completed' },
+                    { id: 'b', delay: 600, status: 'completed' },
+                    { id: 'c', delay: 900, status: 'completed' },
+                    { id: 'd', delay: 700, status: 'completed' },
+                    { id: 'inc34', delay: 400, status: 'completed' },
+                    { id: 'v', delay: 1000, status: 'completed' },
+                    { id: 'integration', delay: 1200, status: 'completed' },
+                ];
+
+                function next() {
+                    if (i >= steps.length) {
+                        // 模拟API调用完成
+                        setTimeout(() => {
+                            const mockPlan = `🐜 蚁群认知重塑方案 · 个性化培训计划
+
+第一部分：学员概况
+根据您的六维思维评分，您在【工具本位】维度表现较弱（得分${data.scores.tool}），这可能影响您在工作中高效利用工具解决问题的能力。但您的【边界思维】维度表现良好（得分${data.scores.boundary}），显示您具备清晰的权责意识。
+
+第二部分：核心提升点
+本次培训将重点提升您的“工具本位”思维，帮助您从拒绝使用工具转变为主动寻找和创造工具。
+
+第三部分：定制课程方案
+课程名称：高效工具思维训练营
+课程时长：90分钟
+学习目标：掌握3种核心工具思维模型，提升工作效率30%以上
+课程模块：
+1. 工具认知重塑（15分钟）
+2. 工具选择框架（30分钟）
+3. 工具创造入门（30分钟）
+4. 实战演练与反馈（15分钟）
+特色亮点：结合您的学习风格（${data.learningStyle || "未指定"}），采用${data.learningStyle ? "可视化案例" : "互动式"}教学。
+
+第四部分：训练方法详解
+方法名称：工具效率型训练法
+核心原理：通过对比手动操作与工具操作的效率差异，让您直观感受工具的价值
+在课程中的体现：在第二模块中，您将亲自计时完成同一个任务的手动版和工具版
+预期效果：您将建立“遇事第一反应是找工具”的思维习惯
+
+第五部分：效果验证体系
+初级掌握标准：能说出3种常用工具的名称和用途
+完全掌握标准：能独立使用工具完成指定任务，效率提升50%以上
+卓越掌握标准：能根据需要自主组合或创造简单工具
+长期跟踪计划：7天后问卷回访，30天后实际工作产出分析
+
+第六部分：风险与注意事项
+可能遇到的困难：初期可能觉得工具学习麻烦
+应对建议：每天只投入10分钟练习一个小工具
+需要避免的误区：不要追求一次性学会所有工具
+紧急联系人/支持方式：课程结束后可随时在社群提问
+
+第七部分：下一步行动
+1. 今天：花5分钟列出您工作中最耗时的3个任务
+2. 明天：为其中一个任务搜索一个可能提升效率的工具
+3. 后天：试用该工具10分钟，记录感受
+
+第八部分：教练寄语
+工具是思维的延伸。当您掌握了高效的工具思维，您将不再是问题的被动解决者，而是系统的主动优化者。相信通过本次训练，您能释放出更大的创造力与效率。加油！`;
+
+                            const mockResponse = {
+                                success: true,
+                                data: {
+                                    plan: mockPlan,
+                                    progress: [],
+                                    metadata: { totalTime: '5000ms', weightVersion: 'v1.0' }
+                                }
+                            };
+
+                            stopTimer();
+                            btn.disabled = false;
+                            btn.innerHTML = '<i class="fas fa-play-circle"></i> 生成认知重塑方案';
+                            showPlan(mockResponse.data);
+                        }, 500);
+                        return;
+                    }
+
+                    const step = steps[i];
+                    updateNode(step.id, 'running', '执行中...');
+                    setTimeout(() => {
+                        updateNode(step.id, step.status, step.status === 'completed' ? '完成' : '警告');
+                        i++;
+                        next();
+                    }, step.delay);
+                }
+
+                next();
+            };
+
+            // 实际API调用应替换此处
+            // try {
+            //     const response = await fetch('/api/reshape-plan', {
+            //         method: 'POST',
+            //         headers: { 'Content-Type': 'application/json' },
+            //         body: JSON.stringify(data)
+            //     });
+            //     const result = await response.json();
+            //     stopTimer();
+            //     btn.disabled = false;
+            //     btn.innerHTML = '<i class="fas fa-play-circle"></i> 生成认知重塑方案';
+            //     if (result.success) {
+            //         showPlan(result.data);
+            //         // 更新节点状态为真实进度
+            //         if (result.data.progress) {
+            //             result.data.progress.forEach(p => {
+            //                 const nodeId = mapNodeId(p.node);
+            //                 if (nodeId) updateNode(nodeId, p.status.toLowerCase(), p.detail);
+            //             });
+            //         }
+            //     } else {
+            //         alert('生成失败：' + (result.error || '未知错误'));
+            //     }
+            // } catch (err) {
+            //     stopTimer();
+            //     btn.disabled = false;
+            //     btn.innerHTML = '<i class="fas fa-play-circle"></i> 生成认知重塑方案';
+            //     alert('网络错误：' + err.message);
+            // }
+
+            // 暂时使用模拟进度
+            simulateProgress();
+        });
+
+        // 节点名称映射（API返回的节点名 → 本地节点ID）
+        function mapNodeId(apiNodeName) {
+            const map = {
+                'A1漏洞诊断': 'a1',
+                'A2深层归因': 'a2',
+                '增量校验1-2': 'inc12',
+                'B病毒匹配': 'b',
+                'C载体设计': 'c',
+                'D验证设计': 'd',
+                '增量校验3-4': 'inc34',
+                'V监督校验': 'v',
+                '整合生成': 'integration'
+            };
+            return map[apiNodeName];
+        }
+
+        // 初始化
+        initNodes();
+    </script>
+</body>
+</html>

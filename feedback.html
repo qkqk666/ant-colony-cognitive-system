@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <title>蚁群 · 学员回访</title>
+  <style>
+    body { font-family: system-ui; max-width: 600px; margin: 40px auto; padding: 20px; }
+    label { display: block; margin: 16px 0 6px; font-weight: 600; }
+    select, input { width: 100%; padding: 8px; margin-bottom: 12px; }
+    button { padding: 12px 24px; background: #d4a853; color: #000; border: none; border-radius: 6px; font-weight: 700; cursor: pointer; }
+  </style>
+</head>
+<body>
+  <h2>🐜 蚁群 · 学员培训回访</h2>
+  <form id="feedbackForm">
+
+    <label>1. 学员ID</label>
+    <input type="text" id="studentId" required placeholder="与玄驹系统同步的学员ID">
+
+    <label>2. 是否成功入职目标职位？</label>
+    <select id="isHired">
+      <option value="">请选择</option>
+      <option value="yes">是</option>
+      <option value="no">否</option>
+      <option value="other">入职了其他相关职位</option>
+    </select>
+
+    <label>3. 入职薪资（税前，元/月）</label>
+    <input type="number" id="salary" placeholder="如未入职请填0">
+
+    <label>4. 试用期是否通过？</label>
+    <select id="probation">
+      <option value="">请选择</option>
+      <option value="yes">是</option>
+      <option value="no">否</option>
+      <option value="pending">还在试用期</option>
+      <option value="na">不适用（未入职）</option>
+    </select>
+
+    <label>5. 培训中最有帮助的3个内容是？（多选）</label>
+    <select id="helpful" multiple size="5">
+      <option value="">动态加载课程列表</option>
+    </select>
+
+    <label>6. 培训中最没用的3个内容是？（多选）</label>
+    <select id="useless" multiple size="5">
+      <option value="">动态加载课程列表</option>
+    </select>
+
+    <label>7. 是否有内容让你感到不适或产生反效果？（选填）</label>
+    <select id="negative" multiple size="5">
+      <option value="">动态加载课程列表</option>
+    </select>
+
+    <button type="submit">提交回访</button>
+  </form>
+
+  <script>
+    // 修正10：动态加载课程列表的JS
+    async function loadCourseList(studentId) {
+      // 从学员数据中拉取课程列表（接口需与蚁群主系统对接）
+      // 这里使用模拟数据，实际应与后端对接
+      const mockCourses = [
+        { id: 'course1', name: '工具效率型训练法' },
+        { id: 'course2', name: '深度追问思维训练' },
+        { id: 'course3', name: '分解触发模块化练习' },
+        { id: 'course4', name: '量化目标设定工作坊' },
+        { id: 'course5', name: '迭代优先项目管理' },
+        { id: 'course6', name: '约束创新边界思维' },
+      ];
+
+      // 模拟API调用
+      // const response = await fetch(`/api/student-courses?studentId=${studentId}`);
+      // const courses = await response.json();
+      const courses = mockCourses;
+
+      ['helpful', 'useless', 'negative'].forEach(selectId => {
+        const select = document.getElementById(selectId);
+        select.innerHTML = '';
+        courses.forEach(course => {
+          const option = document.createElement('option');
+          option.value = course.id;
+          option.textContent = course.name;
+          select.appendChild(option);
+        });
+      });
+    }
+
+    document.getElementById('studentId').addEventListener('change', (e) => {
+      if (e.target.value) loadCourseList(e.target.value);
+    });
+
+    // 表单提交
+    document.getElementById('feedbackForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const formData = {
+        studentId: document.getElementById('studentId').value,
+        isHired: document.getElementById('isHired').value,
+        salary: parseInt(document.getElementById('salary').value) || 0,
+        probation: document.getElementById('probation').value,
+        helpful: Array.from(document.getElementById('helpful').selectedOptions).map(o => o.value),
+        useless: Array.from(document.getElementById('useless').selectedOptions).map(o => o.value),
+        negative: Array.from(document.getElementById('negative').selectedOptions).map(o => o.value),
+        submittedAt: new Date().toISOString()
+      };
+      
+      // 这里应发送到后端API
+      console.log('提交回访数据:', formData);
+      alert('回访提交成功！数据已记录。');
+      e.target.reset();
+    });
+  </script>
+</body>
+</html>
