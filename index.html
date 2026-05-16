@@ -842,38 +842,35 @@
                 next();
             };
 
-            // 实际API调用应替换此处
-            // try {
-            //     const response = await fetch('/api/reshape-plan', {
-            //         method: 'POST',
-            //         headers: { 'Content-Type': 'application/json' },
-            //         body: JSON.stringify(data)
-            //     });
-            //     const result = await response.json();
-            //     stopTimer();
-            //     btn.disabled = false;
-            //     btn.innerHTML = '<i class="fas fa-play-circle"></i> 生成认知重塑方案';
-            //     if (result.success) {
-            //         showPlan(result.data);
-            //         // 更新节点状态为真实进度
-            //         if (result.data.progress) {
-            //             result.data.progress.forEach(p => {
-            //                 const nodeId = mapNodeId(p.node);
-            //                 if (nodeId) updateNode(nodeId, p.status.toLowerCase(), p.detail);
-            //             });
-            //         }
-            //     } else {
-            //         alert('生成失败：' + (result.error || '未知错误'));
-            //     }
-            // } catch (err) {
-            //     stopTimer();
-            //     btn.disabled = false;
-            //     btn.innerHTML = '<i class="fas fa-play-circle"></i> 生成认知重塑方案';
-            //     alert('网络错误：' + err.message);
-            // }
-
-            // 暂时使用模拟进度
-            simulateProgress();
+            // 实际API调用
+            try {
+                const response = await fetch('/api/reshape-plan', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+                const result = await response.json();
+                stopTimer();
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fas fa-play-circle"></i> 生成认知重塑方案';
+                if (result.success) {
+                    showPlan(result.data);
+                    // 更新节点状态为真实进度
+                    if (result.data.progress) {
+                        result.data.progress.forEach(p => {
+                            const nodeId = mapNodeId(p.node);
+                            if (nodeId) updateNode(nodeId, p.status.toLowerCase(), p.detail);
+                        });
+                    }
+                } else {
+                    alert('生成失败：' + (result.error || '未知错误'));
+                }
+            } catch (err) {
+                stopTimer();
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fas fa-play-circle"></i> 生成认知重塑方案';
+                alert('网络错误：' + err.message);
+            }
         });
 
         // 节点名称映射（API返回的节点名 → 本地节点ID）
